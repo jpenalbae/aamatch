@@ -1,5 +1,5 @@
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const expressWs = require('express-ws')
 
 const publicRouter = require('./routes/api_public');
@@ -9,8 +9,6 @@ const options = require('./config');
 
 const sessionOpts = {
     secret: options.sessionSecret,
-    saveUninitialized: false,
-    resave: false,
     cookie: {
         secure: false, // Change this on production
         samesite: true,
@@ -31,7 +29,7 @@ wsInstance.applyTo(authRouter);
 
 // Basic express setup
 app.disable('x-powered-by');
-app.use(session(sessionOpts));
+app.use(cookieSession(sessionOpts));
 app.use(express.json());
 app.use(express.static('public', {maxAge: maxAge}));
 app.use('/api/p/', publicRouter);
