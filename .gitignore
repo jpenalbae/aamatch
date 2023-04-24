@@ -1,3 +1,7 @@
+# App data
+config.js
+data/
+
 # Logs
 logs
 *.log
