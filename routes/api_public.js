@@ -34,6 +34,72 @@ router.post('/login', (req, res) => {
     res.send({ logged: true });
 });
 
+router.post('/register', (req, res) => {
+    // Invalidate current session
+    req.session = null;
+
+    let uname = req.body.username;
+    let password = req.body.password;
+    let mail = req.body.mail;
+    let fcode = req.body.fcode;
+
+    console.log(uname);
+
+    if (!uname || !password || !mail || !fcode) {
+        res.status(400).send({ error: 'Bad request', code: 1 });
+        return;
+    }
+
+    if (typeof(uname) !== 'string' || typeof(password) !== 'string' ||
+            typeof(mail) !== 'string' || typeof(fcode) !== 'string') {
+        res.status(400).send({ error: 'Bad request', code: 2 });
+        return;
+    }
+
+    // Check for a valid friend code
+    const regex = /^SW-\d{4}-\d{4}-\d{4}$/;
+    if (!regex.test(fcode)) {
+        res.status(400).send({ error: 'Bad Switch friend code' });
+        return;
+    }
+
+    // Check password length
+    if (password.length < 6) {
+        res.status(400).send({ error: 'Password too short. Minimun length is 6 characters'});
+        return;
+    }
+
+    if (user.get(uname)) {
+        res.status(400).send({ error: 'User already exists' });
+        return;
+    }
+
+    if (!user.registerUser(uname, password, mail, fcode)) {
+        res.status(500).send({ error: 'Registering user' });
+        return;
+    }
+
+    res.send({ register: true, message: 'Check email' });
+});
+
+
+// TODO redirect to login with success confirmation message
+router.get('/confirmation/:uuid', (req, res) => {
+    let uuid = req.params.uuid;
+
+    if (!uuid) {
+        res.status(400).send({ error: 'Bad request' });
+    }
+
+    if (!user.confirmUser(uuid)) {
+        res.status(400).send({ error: 'Unknown confirmation uuid' });
+        return;
+    }
+
+    res.send({ register: true, message: 'User registered' });
+});
+
+
 
 router.get('/logout', (req, res) => {
     req.session = null;

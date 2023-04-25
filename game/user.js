@@ -1,7 +1,12 @@
 const lmdb = require('lmdb');
-const options = require('../config');
 const { createHash } = require('node:crypto');
+const { v4: uuidv4 } = require('uuid');
 
+const mailer = require('../lib/mailer');
+const options = require('../config');
+
+
+const registerQueue = new Map();
 
 const udb = lmdb.open({
     path: options.usersDB,
@@ -11,8 +16,54 @@ const udb = lmdb.open({
     dupSort: false
 });
 
+function registerUser(user, pass, mail, fcode) {
+    if (typeof(user) !== 'string')
+        return false;
 
-function create(user, pass, fcode) {
+    // Check if user already exists
+    if (udb.get(user))
+        return false;
+
+    let uuid = uuidv4();
+
+    let userData = {
+        username: user,
+        password: pass,
+        mail: mail,
+        fcode: fcode
+    };
+
+    let link = options.url + '/api/p/confirmation/' + uuid;
+
+    if (!mailer.sendMailConfirmation(user, mail, link))
+        console.error("[*] Error sending mail");
+
+    // Delete uuid from queue after 24 hours
+    setTimeout(() => {
+        registerQueue.delete(uuid);
+    }, 24 * 3600000);
+
+    registerQueue.set(uuid, userData);
+    return true;
+}
+
+
+function confirmUser(uuid) {
+    let udata = registerQueue.get(uuid);
+
+    if (!udata)
+        return false;
+
+    registerQueue.delete(uuid);
+    return create(udata.username, udata.password, udata.mail, udata.fcode);
+}
+
+
+function create(user, pass, mail, fcode) {
+
+    if (typeof(user) !== 'string')
+        return false;
+
     // Check if user already exists
     if (udb.get(user))
         return false;
@@ -23,6 +74,7 @@ function create(user, pass, fcode) {
     let userData = {
         username: user,
         password: hash.digest('hex'),
+        mail: mail,
         fcode: fcode,
         failAttempts: 0,            // Number of failed login attempts
         reportedDisconnects: 0,     // Number of opponent disconnects reported
@@ -39,6 +91,7 @@ function create(user, pass, fcode) {
     udb.put(user, userData);
     return true;
 }
+
 
 function userAuth(user, pass) {
     let hash = createHash('sha256');
@@ -74,4 +127,6 @@ function remove(user) {
 
 
 // export all functions
-module.exports = { create, userAuth, get, remove, update };
+module.exports = {  create, userAuth, get, remove, update,
+    registerUser, confirmUser
+};

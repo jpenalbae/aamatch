@@ -1,9 +1,11 @@
 const path = require('path');
 
 const options = {
+    sibKey: 'xkeysib-asdasdasdasda-asdasdasdasd', // sendinblue api key (mailer)
     sessionSecret: 'your_magic secret',
     hostname: 'localhost',
     listenPort: 3000,
+    url: 'http://localhost:3000',
     usersDB:  path.join(__dirname, 'data/users.db'),
     sessionExpiration: 1000 * 60 * 60 * 24 * 30, // One month (in milliseconds)
     httpCache: 1000 * 60 * 60 * 24 * 7, // One week (in milliseconds)
