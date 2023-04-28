@@ -7,6 +7,7 @@ const options = require('../config');
 
 
 const registerQueue = new Map();
+const usersWs = new Map();
 
 const udb = lmdb.open({
     path: options.usersDB,
@@ -71,11 +72,16 @@ function create(user, pass, mail, fcode) {
     let hash = createHash('sha256');
     hash.update(pass);
 
+    // Creaste md5 hash of mail
+    let mailHash = createHash('md5');
+    mailHash.update(mail);
+
     let userData = {
         username: user,
         password: hash.digest('hex'),
         mail: mail,
-        fcode: fcode,
+        avatar: mailHash.digest('hex'),     // Gravatar hash
+        fcode: fcode,               // Nintendo switch friend code
         failAttempts: 0,            // Number of failed login attempts
         reportedDisconnects: 0,     // Number of opponent disconnects reported
         rank: 0,                    // Player rank 0 to 5
@@ -84,7 +90,8 @@ function create(user, pass, mail, fcode) {
             loose: 0,               // Number of matches lost
             hang: 0,                // Number of matches not reported
             bad: 0,                 // Number of matches winner does not match
-            disconnects: 0          // Number of matches disconnected
+            disconnects: 0,         // Number of matches disconnected
+            casual: 0,              // Number of casual matches
         }
     };
 
@@ -126,7 +133,25 @@ function remove(user) {
 }
 
 
+
+/**
+ *  User websocket functions
+ */
+
+function wsAdd(user, data) {
+    usersWs.set(user, data);
+}
+
+function wsRemove(user) {
+    usersWs.delete(user);
+}
+
+function wsGet(user) {
+    return usersWs.get(user);
+}
+
 // export all functions
 module.exports = {  create, userAuth, get, remove, update,
-    registerUser, confirmUser
+    registerUser, confirmUser, wsAdd, wsRemove, wsGet, udb
 };
+

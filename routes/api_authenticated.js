@@ -26,6 +26,7 @@ router.get('/health', (req, res) => {
     memory = process.memoryUsage();
     res.send({ 
         health: 'ok',
+        user: req.session.user,
         memory: memory
     });
 });

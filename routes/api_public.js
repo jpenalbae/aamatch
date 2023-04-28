@@ -119,6 +119,7 @@ router.get('/user/:uname', (req, res) => {
         fcode: udata.fcode,
         rank: udata.rank,
         matches: udata.matches,
+        avatar: udata.avatar,
     };
 
     res.send(data);
