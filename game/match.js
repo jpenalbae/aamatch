@@ -1,10 +1,19 @@
 const { v4: uuidv4 } = require('uuid');
 const user = require('./user');
-
+const options = require('../config');
 
 const queueCasual = new Map();
 const queueRanked = new Map();
 const matches = new Map();
+
+
+function countMatches() {
+    return matches.size;
+}
+
+function countQueue() {
+    return queueCasual.size + queueRanked.size;
+}
 
 
 
@@ -18,6 +27,46 @@ setInterval(() => {
         }
     }
 }, 3600000);
+
+
+// Remove users from waiting queue every minute
+// Remove older than 30 mins
+setInterval(() => {
+    let now = Date.now();
+    for (let [key, value] of queueCasual) {
+        if (now - value.time > options.queueTimeout) {
+            queueCasual.delete(key);
+            doQueueTimeout(key);
+        }
+    }
+    for (let [key, value] of queueRanked) {
+        if (now - value.time > options.queueTimeout) {
+            queueRanked.delete(key);
+            doQueueTimeout(key);
+        }
+    }
+}, 60000);
+
+
+function doQueueTimeout(uname) {
+    let ws = user.wsGet(uname);
+    if (!ws)
+        return;
+
+    ws.send(JSON.stringify({
+        push: 'timeout',
+        type: 'queue'
+    }));
+
+    ws.send(JSON.stringify({
+        push: 'msg',
+        type: 'error',
+        message: 'Timeout looking for opponent. Please retry.'
+    }));
+
+    ws.terminate();
+    user.wsRemove(uname);
+}
 
 
 function matchJoinTimeout(matchid) {
@@ -37,7 +86,8 @@ function matchJoinTimeout(matchid) {
         let ws = user.wsGet(key);
         if (ws) {
             ws.send(JSON.stringify({
-                push: 'match_timeout',
+                push: 'timeout',
+                type: 'match',
                 message: 'Match timed out'
             }));
             ws.terminate();
@@ -152,7 +202,7 @@ function findCasualGame(uname) {
     ws.send(JSON.stringify({ push: 'matched', matchid: matchid }));
 
     // Clear game if players are not ready after 5 mins
-    setInterval(matchJoinTimeout, 5 * 60 * 1000, matchid);
+    setTimeout(matchJoinTimeout, 5 * 60 * 1000, matchid);
 
     return { code: 0, message: 'matched', matchid: matchid };
 }
@@ -164,5 +214,6 @@ function getMatchID(matchid) {
 
 
 module.exports = { 
-    findCasualGame, matchGetMyUserData, matchGetOpponentData,  getMatchID
+    findCasualGame, matchGetMyUserData, matchGetOpponentData,  getMatchID,
+    countMatches, countQueue
 };

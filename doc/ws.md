@@ -31,6 +31,14 @@ The user is ready to play
 { 'cmd': 'ready'}
 ```
 
+### ready
+
+Send chat message to the opponent
+
+```json
+{ 'cmd': 'chat', 'message': 'hello'}
+```
+
 
 ## push
 
@@ -46,7 +54,18 @@ Main format is:
 { 'push': 'matched', 'matchid': 'e5e8d241-531a-45aa-a3e1-3ae1e037c564'}
 ```
 
-### message
+### timeout
+
+```json
+{ 'push': 'timeout', 'type': 'queue'}
+```
+
+Timed out while waiting for `type`. Where types can be:
+ - queue
+ - match
+
+
+### msg
 
 ```json
 { 'push': 'msg', type: 'error', 'message': 'notify something to the user'}
@@ -55,23 +74,6 @@ Main format is:
 Where type can be:
  - error
  - info
-
-
-### is-ready
-
-Checks if the player is ready to play
-
-```json
-{ 'push': 'is-ready'}
-```
-
-### is-ready
-
-Timeout waiting for players
-
-```json
-{ 'push': 'match_timeout'}
-```
 
 
 ### ready

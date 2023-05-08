@@ -7,6 +7,7 @@ const options = require('../config');
 
 
 const registerQueue = new Map();
+const resetQueue = new Map();
 const usersWs = new Map();
 
 const udb = lmdb.open({
@@ -16,6 +17,11 @@ const udb = lmdb.open({
     cache: true,
     dupSort: false
 });
+
+
+function countUsers() {
+    return usersWs.size;
+}
 
 function registerUser(user, pass, mail, fcode) {
     if (typeof(user) !== 'string')
@@ -47,6 +53,46 @@ function registerUser(user, pass, mail, fcode) {
     registerQueue.set(uuid, userData);
     return true;
 }
+
+function resetRequest(user) {
+    const udata = udb.get(user);
+    if (!udata)
+        return false;
+
+    let uuid = uuidv4();
+    let link = options.url + '/api/p/reset/' + uuid;
+
+    if (!mailer.sendPasswordReset(user, udata.mail, link))
+        console.error("[*] Error sending mail");
+
+    // Delete uuid from queue after 24 hours
+    setTimeout(() => {
+        resetQueue.delete(uuid);
+    }, 24 * 3600000);
+
+    resetQueue.set(uuid, user);
+    return true;
+}
+
+function resetPassword(uuid, password) {
+    const user = resetQueue.get(uuid);
+    if (!user)
+        return false;
+
+    const udata = udb.get(user);
+    if (!udata)
+        return false;
+
+    let hash = createHash('sha256');
+    hash.update(password);
+
+    udata.password = hash.digest('hex');
+    update(user, udata);
+
+    resetQueue.delete(uuid);
+    return true;
+}
+
 
 
 function confirmUser(uuid) {
@@ -118,6 +164,23 @@ function userAuth(user, pass) {
     }
 }
 
+function getPublicInfo(user) {
+    let udata = udb.get(user);
+
+    if (!udata)
+        return undefined;
+
+    let data = {
+        username: udata.username,
+        fcode: udata.fcode,
+        rank: udata.rank,
+        matches: udata.matches,
+        avatar: udata.avatar,
+    };
+
+    return data;
+}
+
 
 function update(user, data) {
     return udb.put(user, data);
@@ -152,6 +215,7 @@ function wsGet(user) {
 
 // export all functions
 module.exports = {  create, userAuth, get, remove, update,
-    registerUser, confirmUser, wsAdd, wsRemove, wsGet, udb
+    registerUser, confirmUser, wsAdd, wsRemove, wsGet, udb,
+    countUsers, getPublicInfo, resetRequest, resetPassword
 };
 

@@ -8,6 +8,9 @@ const publicRouter = require('./routes/api_public');
 const authRouter = require('./routes/api_authenticated');
 const options = require('./config');
 
+const match = require('./game/match');
+const user = require('./game/user');
+
 const sessionOpts = {
     secret: options.sessionSecret,
     cookie: {
@@ -19,14 +22,28 @@ const sessionOpts = {
     }
 };
 
+
 let maxAge = 0;
 if (process.env.NODE_ENV === 'production')
     maxAge = options.httpCache;
 
-
 const app = express();
 const wsInstance = expressWs(app, null, {leaveRouterUntouched: true});
 wsInstance.applyTo(authRouter);
+
+// Livereload
+if (process.env.NODE_ENV !== 'production') {
+    console.log('Enable livereload');
+
+    app.use(require('connect-livereload')());
+    
+    const liveReloadServer = require('livereload').createServer();
+    liveReloadServer.server.once("connection", () => {
+    setTimeout(() => {
+        liveReloadServer.refresh("/");
+    }, 600);
+    });
+}
 
 // Basic express setup
 app.set('views', path.join(__dirname, 'views'));
@@ -42,7 +59,27 @@ authRouter.ws('/match/:matchid', wsMatchHandler);
 
 /* Home page. */
 app.get('/', function(req, res) {
-    res.render('index', { user: req.session.user });
+    const pageVars = {
+        user: req.session.user,
+        matches: match.countMatches(),
+        queue: match.countQueue(),
+        users: user.countUsers(),
+        page: 'index'
+    };
+    res.render('index', pageVars);
+});
+
+
+app.get('/match/:id', function(req, res) {
+    const pageVars = {
+        user: req.session.user,
+        matches: match.countMatches(),
+        queue: match.countQueue(),
+        users: user.countUsers(),
+        matchid: req.params.id,
+        page: 'match'
+    };
+    res.render('index', pageVars);
 });
 
 module.exports = app;

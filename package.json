@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "tailwind": "tailwindcss -i ./views/tailwind.css -o ./public/css/main.css",
     "dev": "nodemon index.js",
     "prod": "NODE_ENV=production node index.js"
   },
@@ -28,7 +29,10 @@
   },
   "homepage": "https://github.com/jpenalbae/aamatch#readme",
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "connect-livereload": "^0.6.1",
+    "livereload": "^0.9.3",
+    "nodemon": "^2.0.22",
+    "tailwindcss": "^3.3.2"
   },
   "dependencies": {
     "cookie-session": "^2.0.0",
