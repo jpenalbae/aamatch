@@ -1,3 +1,4 @@
+const os = require('os');
 const express = require('express');
 const router = express.Router();
 const user = require('../game/user');
@@ -191,7 +192,9 @@ router.get('/health', (req, res) => {
         matches: match.countMatches(),
         queue: match.countQueue(),
         users: user.countUsers(),
-        registered: user.countRegistered()
+        registered: user.countRegistered(),
+        uptime: process.uptime(), // in seconds
+        load: os.loadavg(),
     });
 });
 
