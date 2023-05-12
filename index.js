@@ -21,17 +21,6 @@ function dropPrivs() {
 
 const port = options.listenPort;
 
-const sessionOpts = {
-    secret: options.sessionSecret,
-    cookie: {
-        secure: options.secure, // Change this on production
-        samesite: true,
-        httpOnly: true,
-        maxAge: options.sessionExpiration,
-        path: '/'
-    }
-};
-
 // Make the URL
 let proto = "http://"
 if (options.secure)
@@ -68,11 +57,12 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
+
 // Basic express setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.disable('x-powered-by');
-app.use(cookieSession(sessionOpts));
+app.use(cookieSession({secret: options.sessionSecret}));
 app.use(express.json());
 app.use(express.static('public', {maxAge: maxAge}));
 app.use('/', pagesRouter);

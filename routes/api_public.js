@@ -4,6 +4,7 @@ const router = express.Router();
 const user = require('../game/user');
 const match = require('../game/match');
 const rate = require('../lib/ratelimit');
+const options = require('../config');
 
 
 router.post('/login', (req, res) => {
@@ -28,6 +29,8 @@ router.post('/login', (req, res) => {
         return;
     }
 
+    // Set session expiration
+    req.sessionOptions.maxAge = options.sessionExpiration;
     req.session.user = req.body.username;
     res.send({ logged: true });
 });
