@@ -228,7 +228,7 @@ function wsMatchHandler(ws, req) {
         // Handle commands
         switch (jmsg.cmd) {
             case 'ready':
-                console.log('Player ready: ' + uname);
+                // console.log('Player ready: ' + uname);
                 matchPlayerReady(matchData);
                 break;
             case 'chat':

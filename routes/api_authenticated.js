@@ -17,7 +17,6 @@ router.use((req, res, next) => {
         return;
     }
 
-    console.log('user found: ', req.session.user);
     next();
 });
 
