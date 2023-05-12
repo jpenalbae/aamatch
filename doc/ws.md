@@ -40,6 +40,20 @@ Send chat message to the opponent
 ```
 
 
+### report
+
+Send chat message to the opponent
+
+```json
+{ 'cmd': 'report', 'type': 'win'}
+```
+
+Where possible types are:
+ - win
+ - loose
+ - disconnect
+
+
 ## push
 
 Main format is:
@@ -84,6 +98,24 @@ Both players are ready to play
 { 'push': 'ready'}
 ```
 
+### disconnect
+
+The opponent has disconnected
+
+```json
+{ 'push': 'disconnect'}
+```
+
+
+### end
+
+Opponent already reported the result
+
+```json
+{ 'push': 'end'}
+```
+
+
 ### chat
 
 Send message to the opponent
@@ -97,7 +129,7 @@ Send message to the opponent
 # Normal flow for a game
 
 
-Seach for a casual game using the `/api/a/queue` websocket.
+Search for a casual game using the `/api/a/queue` websocket.
 
 ```txt
 
@@ -143,11 +175,11 @@ can report the result.
 ```txt
 User1 <----> Server
 
--------> { cmd: 'win'}
+-------> { cmd: 'report', type: 'win}
 
 User2 <----> Server
 
--------> { cmd: 'loose'}
+-------> { cmd: 'report', type: 'loose}
 <------- { push: 'end'}
 
 

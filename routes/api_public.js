@@ -1,17 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const user = require('../game/user');
-
-
-/* GET users listing. */
-router.get('/health', (req, res) => {
-    res.send('Public health');
-});
-
-router.get('/login', (req, res) => {
-    req.session.user = 'pepe';
-    res.send({ logged: true });
-});
+const match = require('../game/match');
+const rate = require('../lib/ratelimit');
 
 
 router.post('/login', (req, res) => {
@@ -21,6 +12,12 @@ router.post('/login', (req, res) => {
     if (!uname || !password) {
         req.session = null;
         res.status(401).send({ logged: false });
+        return;
+    }
+
+    // Check no more than 10 logins per minute
+    if (!rate.checkRate(req.ip, '/login', 10, 60000)) {
+        res.status(429).send({ logged: false, error: 'Too many requests' });
         return;
     }
 
@@ -34,6 +31,7 @@ router.post('/login', (req, res) => {
     res.send({ logged: true });
 });
 
+
 router.post('/register', (req, res) => {
     // Invalidate current session
     req.session = null;
@@ -43,8 +41,6 @@ router.post('/register', (req, res) => {
     let mail = req.body.mail;
     let fcode = req.body.fcode;
 
-    console.log(uname);
-
     if (!uname || !password || !mail || !fcode) {
         res.status(400).send({ error: 'Bad request', code: 1 });
         return;
@@ -53,6 +49,21 @@ router.post('/register', (req, res) => {
     if (typeof(uname) !== 'string' || typeof(password) !== 'string' ||
             typeof(mail) !== 'string' || typeof(fcode) !== 'string') {
         res.status(400).send({ error: 'Bad request', code: 2 });
+        return;
+    }
+
+    // Check username pattern for valid characters
+    const userRegex = /^[a-zA-Z0-9_\-]+$/;
+    if (!userRegex.test(uname)) {
+        res.status(400).send({ error: 'Bad username. Only letters and numbers allowed.', code: 3 });
+        return;
+    }
+
+    // check for valid email
+    //const mailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const mailRegex = /^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/;
+    if (!mailRegex.test(mail)) {
+        res.status(400).send({ error: 'Bad email' });
         return;
     }
 
@@ -74,8 +85,15 @@ router.post('/register', (req, res) => {
         return;
     }
 
+
+    // Check no more than 3 registrations per minute
+    if (!rate.checkRate(req.ip, '/register', 3, 60000)) {
+        res.status(429).send({ error: 'Too many requests' });
+        return;
+    }
+
     if (!user.registerUser(uname, password, mail, fcode)) {
-        res.status(500).send({ error: 'Registering user' });
+        res.status(500).send({ error: 'Error. Try again later.' });
         return;
     }
 
@@ -96,34 +114,86 @@ router.get('/confirmation/:uuid', (req, res) => {
         return;
     }
 
-    res.send({ register: true, message: 'User registered' });
+    //res.send({ register: true, message: 'User registered' });
+    res.redirect('/#registerok');
 });
 
+
+router.post('/resetreq', (req, res) => {
+    let uname = req.body.username;
+
+    if (!uname || typeof(uname) !== 'string') {
+        res.status(400).send({ reset:false, error: 'Bad request' });
+        return;
+    }
+
+    // Check no more than 10 reset requests per min
+    if (!rate.checkRate(req.ip, '/resetreq', 10, 60000)) {
+        res.status(429).send({ reset:false, error: 'Too many requests' });
+        return;
+    }
+
+    user.resetRequest(uname);
+
+    // Always send same response to avoid user enumeration
+    res.send({ reset: true });
+});
+
+
+// reset user password
+router.post('/reset', (req, res) => {
+    let password = req.body.password;
+    let uuid = req.body.uuid;
+
+    if (!password || !uuid) {
+        res.status(400).send({ reset: false, error: 'Bad request' });
+        return;
+    }
+
+    if (typeof(uuid) !== 'string' || typeof(password) !== 'string' ||
+            typeof(uuid) !== 'string') {
+        res.status(400).send({ reset: false, error: 'Bad request' });
+        return;
+    }
+
+    // Check password length
+    if (password.length < 6) {
+        res.status(400).send({ 
+            reset: false,
+            error: 'Password too short. Minimun length is 6 characters'
+        });
+        return;
+    }
+
+    if (!user.resetPassword(uuid, password)) {
+        res.status(500).send({ reset: false, error: 'Error reseting password' });
+        return;
+    }
+
+    res.send({ reset: true });
+});
 
 
 router.get('/logout', (req, res) => {
     req.session = null;
-    res.send({ logged: false });
+    //res.send({ logged: false });
+
+    //redirect to homepage
+    res.redirect('/');
 });
 
-router.get('/user/:uname', (req, res) => {
-    let udata = user.get(req.params.uname);
 
-    if (!udata) {
-        res.status(404).send({ error: 'User not found' });
-        return;
-    }
-
-    let data = {
-        username: udata.username,
-        fcode: udata.fcode,
-        rank: udata.rank,
-        matches: udata.matches,
-        avatar: udata.avatar,
-    };
-
-    res.send(data);
-
+router.get('/health', (req, res) => {
+    memory = process.memoryUsage();
+    
+    res.send({ 
+        memory: memory,
+        matches: match.countMatches(),
+        queue: match.countQueue(),
+        users: user.countUsers(),
+        registered: user.countRegistered()
+    });
 });
+
 
 module.exports = router;

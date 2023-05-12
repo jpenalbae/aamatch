@@ -1,0 +1,79 @@
+<div id="register" class="hidden">
+
+    <div class="m-auto md:w-1/3 bg-water-tile rounded-md shadow-xl p-2 mb-8 max-w-md">
+    <div class="flex flex-col bg-white shadow-md px-4 sm:px-6 md:px-8 lg:px-10 py-8 rounded-md w-full max-w-md">
+        <div class="font-medium self-center text-xl sm:text-2xl text-gray-800">
+          Create Your Account
+        </div>
+        
+        <div class="mt-10">
+          <form action="javascript:void(0);" id="form_register">
+            <div class="flex flex-col mb-4">
+              <label for="user" class="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">Username:</label>
+              <div class="relative">
+                <div class="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                  <input id="username" type="text" name="username" class="text-sm sm:text-base placeholder-gray-500 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-400" placeholder="Username" />
+              </div>
+            </div>
+
+            <div class="flex flex-col mb-4">
+              <label for="password" class="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">Password:</label>
+              <div class="relative">
+                <div class="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                  <i class="fa-solid fa-lock"></i>
+                </div>
+    
+                <input id="password" type="password" name="password" class="text-sm sm:text-base placeholder-gray-500 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-400" placeholder="Password" />
+              </div>
+            </div>
+
+            <div class="flex flex-col mb-4">
+              <label for="repeat" class="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">Repeat password:</label>
+              <div class="relative">
+                <div class="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                  <i class="fa-solid fa-lock"></i>
+                </div>
+    
+                <input id="repeat" type="password" name="repeat" class="text-sm sm:text-base placeholder-gray-500 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-400" placeholder="Password" />
+              </div>
+            </div>
+
+            <div class="flex flex-col mb-4">
+              <label for="email" class="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">E-Mail Address:</label>
+              <div class="relative">
+                <div class="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                  <i class="fa-solid fa-envelope"></i>
+                </div>
+    
+                <input id="mail" type="text" name="mail" class="text-sm sm:text-base placeholder-gray-500 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-400" placeholder="E-Mail Address" />
+              </div>
+            </div>
+
+            <div class="flex flex-col mb-4">
+              <label for="friend_code" class="mb-1 text-xs sm:text-sm tracking-wide text-gray-600">Friend Code:</label>
+              <div class="relative">
+                <div class="inline-flex items-center justify-center absolute left-0 top-0 h-full w-10 text-gray-400">
+                  <i class="fa-solid fa-user-group"></i>
+                </div>
+    
+                <input id="fcode" type="text" name="fcode" class="text-sm sm:text-base placeholder-gray-500 pl-10 pr-4 rounded-lg border border-gray-400 w-full py-2 focus:outline-none focus:border-blue-400" placeholder="SW-1234-1234-1234" />
+              </div>
+            </div>
+    
+            <div class="flex w-full mt-10">
+              <button id="btn_register" onclick="register(this.form)" class="flex items-center justify-center focus:outline-none text-white text-sm sm:text-base bg-blue-600 hover:bg-blue-700 rounded py-2 w-full transition duration-150 ease-in">
+                <span class="mr-2">Register</span>
+                <i class="fa-solid fa-user-plus"></i>
+              </button>
+            </div>
+          </form>
+
+          <div id="errormsg_register" class="text-red-600 text-xs text-center mt-3">
+          </div>
+
+        </div>
+      </div>
+      </div>
+</div>

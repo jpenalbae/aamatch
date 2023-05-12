@@ -6,10 +6,8 @@ const path = require('path');
 const { wsMatchHandler,  wsQueueHandler } = require('./routes/wshandler');
 const publicRouter = require('./routes/api_public');
 const authRouter = require('./routes/api_authenticated');
+const pagesRouter = require('./routes/pages');
 const options = require('./config');
-
-const match = require('./game/match');
-const user = require('./game/user');
 
 const sessionOpts = {
     secret: options.sessionSecret,
@@ -52,34 +50,11 @@ app.disable('x-powered-by');
 app.use(cookieSession(sessionOpts));
 app.use(express.json());
 app.use(express.static('public', {maxAge: maxAge}));
+app.use('/', pagesRouter);
 app.use('/api/p/', publicRouter);
 app.use('/api/a/', authRouter);
 authRouter.ws('/queue', wsQueueHandler);
 authRouter.ws('/match/:matchid', wsMatchHandler);
 
-/* Home page. */
-app.get('/', function(req, res) {
-    const pageVars = {
-        user: req.session.user,
-        matches: match.countMatches(),
-        queue: match.countQueue(),
-        users: user.countUsers(),
-        page: 'index'
-    };
-    res.render('index', pageVars);
-});
-
-
-app.get('/match/:id', function(req, res) {
-    const pageVars = {
-        user: req.session.user,
-        matches: match.countMatches(),
-        queue: match.countQueue(),
-        users: user.countUsers(),
-        matchid: req.params.id,
-        page: 'match'
-    };
-    res.render('index', pageVars);
-});
 
 module.exports = app;

@@ -1,7 +1,7 @@
 const user = require('../../game/user');
 
 // Check for arguments
-if (process.argv.length != 5) {
+if (process.argv.length != 6) {
     console.log('Usage: node useradd.js <username> <password> <mail> <friend code>');
     process.exit(1);
 }

@@ -7,8 +7,6 @@ const user = require('../game/user');
  */
 
 
-const queueChat = new Map();
-
 
 function queueFindCasualGame(ws, uname) {
     const res = match.findCasualGame(uname);
@@ -64,29 +62,8 @@ function parseWsJSON(msg) {
     return jmsg;
 }
 
-function queueRelayChat(uname, msg) {
-    
-    queueChat.forEach((value, key) => {
-        if (key === uname)
-            return;
-
-        let ws = user.wsGet(key);
-        if (!ws)
-            return;
-
-        console.log("Websocket");
-        console.log(ws);
-
-        ws.send(JSON.stringify({
-            push: 'chat',
-            message: msg
-        }));
-    });
-}
-
 
 function cleanQueueMaps(uname) {
-    queueChat.delete(uname);
     user.wsRemove(uname);
 }
 
@@ -95,7 +72,6 @@ function wsQueueHandler(ws, req) {
 
     const uname = req.session.user;
     user.wsAdd(uname, ws);
-    queueChat.set(uname, ws);
 
     
     ws.on('message', msg => {
@@ -114,9 +90,6 @@ function wsQueueHandler(ws, req) {
             case 'find_casual':
                 queueFindCasualGame(ws, uname);
                 break;
-            case 'chat':
-                queueRelayChat(uname, jmsg.message);
-                break;
             default:
                 ws.send(JSON.stringify({
                     push: 'msg',
@@ -128,9 +101,9 @@ function wsQueueHandler(ws, req) {
         }
     });
 
-    ws.on('close', () => { cleanQueueMaps(uname); });
-    ws.on('error', () => { cleanQueueMaps(uname); });
-    ws.on('timeout', () => { cleanQueueMaps(uname); });
+    ws.on('close', () => { match.removeFromQueue(uname); });
+    ws.on('error', () => { match.removeFromQueue(uname); });
+    ws.on('timeout', () => { match.removeFromQueue(uname); });
 }
 
 
@@ -141,7 +114,11 @@ function wsQueueHandler(ws, req) {
 
 
 function matchPlayerReady(matchData) {
+    const matchInfo = match.getMatchID(matchData.matchid);
     matchData.udata.ready = true;
+
+    if (!matchInfo)
+        return;
 
     // Check if opponent is ready
     if (!matchData.odata.ready) 
@@ -149,6 +126,7 @@ function matchPlayerReady(matchData) {
 
     // Mark the match as ready for the timeout
     matchData.ready = true;
+    matchInfo.playing = true;
 
     // Both players are ready, start the match
     // Notify both players
@@ -187,10 +165,6 @@ function matchRelayChat(matchData, msg) {
 
 function wsMatchHandler(ws, req) {
 
-
-    console.log('connected to match')
-    console.log(req.params.matchid);
-    
     // On first connection wer obtain all the match info
     const matchid = req.params.matchid;
     const matchInfo = match.getMatchID(matchid);
@@ -198,23 +172,19 @@ function wsMatchHandler(ws, req) {
     const udata = match.matchGetMyUserData(uname, matchid);
     const opponent = match.matchGetOpponentData(uname, matchid);
 
+    udata.ready = false;
+    opponent.ready = false;
+
     const matchData = {
         uname: uname,
         udata: udata,
         odata: opponent,
-        matchid: matchid
+        matchid: matchid,
+        ready: false,
     };
 
     // Check if match exists and user belongs to it
     if (!matchInfo || !udata) {
-
-        console.log('Someone is wrong on this match');
-        console.log('Match info')
-        console.log(matchInfo)
-
-        console.log('user data')
-        console.log(udata)
-
         ws.terminate();
         user.wsRemove(uname);
         return;
@@ -222,6 +192,27 @@ function wsMatchHandler(ws, req) {
 
 
     user.wsAdd(uname, ws);
+
+    // Send match info
+    ws.send(JSON.stringify({
+        push: 'match_info',
+        matchid: matchid,
+        user: {
+            username: udata.username,
+            fcode: udata.fcode,
+            rank: udata.rank,
+            matches: udata.matches,
+            avatar: udata.avatar
+        },
+        opponent: {
+            username: opponent.username,
+            fcode: opponent.fcode,
+            rank: opponent.rank,
+            matches: opponent.matches,
+            avatar: opponent.avatar
+        }
+    }));
+
 
     ws.on('message', msg => {
         let jmsg = parseWsJSON(msg);
@@ -237,10 +228,14 @@ function wsMatchHandler(ws, req) {
         // Handle commands
         switch (jmsg.cmd) {
             case 'ready':
+                console.log('Player ready: ' + uname);
                 matchPlayerReady(matchData);
                 break;
             case 'chat':
                 matchRelayChat(matchData, jmsg.message);
+                break;
+            case 'report':
+                match.reportMatchResult(matchData, jmsg.type);
                 break;
             default:
                 ws.send(JSON.stringify({
@@ -254,9 +249,15 @@ function wsMatchHandler(ws, req) {
         }
     });
 
-    ws.on('close', () => { user.wsRemove(uname); });
-    ws.on('error', () => { user.wsRemove(uname); });
-    ws.on('timeout', () => { user.wsRemove(uname); });
+
+    function handleMatchWsEnd() {
+        match.reportMatchResult(matchData, 'close');
+        cleanQueueMaps(uname);
+    }
+
+    ws.on('close', () =>  handleMatchWsEnd());
+    ws.on('error', () =>  handleMatchWsEnd());
+    ws.on('timeout', () =>  handleMatchWsEnd());
 }
 
 

@@ -2,6 +2,11 @@ const user = require('../../game/user');
 const { udb } = require('../../game/user');
 
 
-for (let { key, value } of udb.getRange()) {
+const range = udb.getRange();
+for (let { key, value } of range) {
 	console.log(value);
 }
+
+
+console.log(udb.getStats().entryCount);
+

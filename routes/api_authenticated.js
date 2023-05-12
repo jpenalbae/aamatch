@@ -22,13 +22,16 @@ router.use((req, res, next) => {
 });
 
 
-router.get('/health', (req, res) => {
-    memory = process.memoryUsage();
-    res.send({ 
-        health: 'ok',
-        user: req.session.user,
-        memory: memory
-    });
+router.get('/user/:uname', (req, res) => {
+    let udata = user.getPublicInfo(req.params.uname);
+
+    if (!udata) {
+        res.status(404).send({ error: 'User not found' });
+        return;
+    }
+
+    res.send(udata);
+
 });
 
 

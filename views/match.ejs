@@ -1,0 +1,120 @@
+<div id="main">
+
+    <div class="flex flex-col md:flex-row m-auto justify-center mb-8 items-center">
+        <div class="flex flex-row items-end">
+            <div class="border-black border-2">
+                <img src="/img/avatars/1.png" id="player_avatar" alt="p1" class="w-20">
+            </div>
+            <div class="bg-black/70 h-16 rounded-r-full text-slate-400 pl-4 pr-8 pt-3">
+                <h2 class="font-bold text-white text-sm" id="player_name">
+                    Player
+                </h2>
+                <p class="text-xs" id="player_fcode">SW-1234-1234-1234</p>
+            </div>
+        </div>
+
+        <div class="px-4 pt-4">
+            <img src="/img/vs.png" alt="vs" class="w-14">
+        </div>
+
+        <div class="flex flex-row items-end">
+            <div class="bg-black/70 h-16 rounded-l-full text-slate-400 pr-4 pl-8 pt-3">
+                <h2 class="font-bold text-white text-right test-sm" id="opponent_name">
+                    Opponent
+                </h2>
+                <p class="text-xs text-right" id="opponent_fcode">SW-1234-1234-1234</p>
+            </div>
+            <div class="border-black border-2">
+                <img src="/img/avatars/2.png" id="opponent_avatar" alt="p2" class="w-20 transform -scale-x-100">
+            </div>
+        </div>
+    </div>
+
+    <div id="match_end" class="flex flex-row mx-auto justify-center mb-8 hidden">
+        <div class="bg-slate-500 text-white px-4 py-2 rounded-sm shadow-lg flex flex-row items-center">
+            <i class="fa-regular fa-flag fa-flip"></i>
+            <p class="mx-4 font-bold">
+                match ended
+            </p>
+            <i class="fa-regular fa-flag fa-flip"></i>
+        </div>
+        
+    </div>
+
+    <div class="relative border-yellow-500 flex justify-center h-[460px]">
+        
+        <!-- Overlay to disable chat -->
+        <div id="moverlay" class="bg-black/60 absolute z-10 m-auto w-full md:w-1/3 h-[460px] rounded-md">
+            <div class="flex flex-col items-center justify-center h-full">
+                <h2 class="text-xl text-white mb-3 text-center" id="wait_text">
+                    Press ready to start the match
+                </h2>
+                <div class="flex flex-row">
+                    <button class="bg-green-600 rounded-md text-white px-4 py-2 hover:bg-green-800 
+                            transition duration-500 disabled:bg-slate-500 disabled:scale-100" 
+                            onclick="playerReady()" id="btn_ready">
+                        Ready
+                    </button>
+                </div>
+                <!-- Timer -->
+                <div class="flex flex-row mt-2 text-sm text-slate-300" id="countdown">
+                    <span id="minutes">05</span>:<span id="seconds">00</span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="w-full md:m-auto md:w-1/3 bg-water-tile rounded-md shadow-xl p-2 mb-8 absolute">
+
+            <div id="chatbox" class="bg-white rounded-t-md px-3 py-2 divide-y h-[400px] mx-auto flex flex-col overflow-y-auto">
+                <!--
+                <div class="msg">
+                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&amp;ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&amp;auto=format&amp;fit=facearea&amp;facepad=4&amp;w=256&amp;h=256&amp;q=80">
+                    <div>
+                    <strong>Jane White</strong>
+                    <span>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima, ut recusandae. Quasi quae illum autem consequuntur culpa libero illo inventore saepe rem quia, quisquam repellendus aperiam beatae! Necessitatibus, exercitationem praesentium.</span>
+                    </div>
+                </div>
+                <div class="msg">
+                    <img src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-1.2.1&amp;ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&amp;auto=format&amp;fit=facearea&amp;facepad=4&amp;w=256&amp;h=256&amp;q=80">
+                    <div>
+                    <strong>Ray Flint</strong>
+                    <span>Technical Advisor</span>
+                    </div>
+                </div>
+                -->
+            </div>
+
+            <div class="bg-white rounded-b-md mt-1">
+                <input type="text" name="msg" id="msg" placeholder="Message your opponent here"
+                    class="w-full focus:outline-none px-5 py-2 disabled:bg-slate-500" 
+                    onkeydown="sendChatMsg(event)">
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-row md:w-1/3 m-auto justify-center pt-8">
+        <button disabled class="bg-violet-500 rounded-l-md text-white px-4 py-2 hover:bg-violet-700 text-sm
+        transition duration-500 disabled:bg-slate-500 disabled:scale-100 shadow-lg border-r"
+        id="btn_win" onclick="modalWin()">
+            Win
+        </button>
+        <button disabled class="bg-violet-500 text-white px-4 py-2 hover:bg-violet-700 text-sm
+        transition duration-500 disabled:bg-slate-500 disabled:scale-100  shadow-lg border-r"
+        id="btn_loose" onclick="modalLoose()">
+            Loose
+        </button>
+        <!--
+        <button class="bg-violet-500 text-white px-4 py-2 hover:bg-violet-700 text-sm
+        transition duration-500 disabled:bg-slate-500 disabled:scale-100  shadow-lg border-r"
+        id="btn_withdraw" onclick="modalWithdraw()" disabled="true">
+            Withdraw
+        </button>
+        -->
+        <button disabled class="bg-violet-500 rounded-r-md text-white px-4 py-2 hover:bg-violet-700 text-sm
+        transition duration-500 disabled:bg-slate-500 disabled:scale-100  shadow-lg" 
+        id="btn_disconnect" onclick="modalDisconnect()">
+            Opponent Disconnect
+        </button>
+    </div>
+</div>

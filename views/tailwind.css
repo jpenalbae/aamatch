@@ -1,0 +1,41 @@
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;
+
+
+
+/* Extra css for chat msgs */
+
+div.msg {
+    @apply flex;
+    @apply items-center;
+    @apply gap-4;
+    @apply px-4;
+    @apply py-2;
+}
+
+
+div.msg img {
+    @apply w-12;
+    @apply h-12;
+    @apply rounded-full;
+}
+
+div.msg div {
+    @apply flex;
+    @apply flex-col;
+}
+
+div.msg strong {
+    @apply text-slate-900;
+    @apply text-sm;
+    @apply font-medium;
+}
+
+div.msg span {
+    @apply text-slate-500;
+    @apply text-sm;
+    @apply font-medium;
+}

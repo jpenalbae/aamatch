@@ -23,6 +23,10 @@ function countUsers() {
     return usersWs.size;
 }
 
+function countRegistered() {
+    return udb.getStats().entryCount;
+}
+
 function registerUser(user, pass, mail, fcode) {
     if (typeof(user) !== 'string')
         return false;
@@ -42,8 +46,7 @@ function registerUser(user, pass, mail, fcode) {
 
     let link = options.url + '/api/p/confirmation/' + uuid;
 
-    if (!mailer.sendMailConfirmation(user, mail, link))
-        console.error("[*] Error sending mail");
+    mailer.sendMailConfirmation(user, mail, link);
 
     // Delete uuid from queue after 24 hours
     setTimeout(() => {
@@ -60,7 +63,7 @@ function resetRequest(user) {
         return false;
 
     let uuid = uuidv4();
-    let link = options.url + '/api/p/reset/' + uuid;
+    let link = options.url + '/reset/' + uuid;
 
     if (!mailer.sendPasswordReset(user, udata.mail, link))
         console.error("[*] Error sending mail");
@@ -92,7 +95,6 @@ function resetPassword(uuid, password) {
     resetQueue.delete(uuid);
     return true;
 }
-
 
 
 function confirmUser(uuid) {
@@ -128,7 +130,6 @@ function create(user, pass, mail, fcode) {
         mail: mail,
         avatar: mailHash.digest('hex'),     // Gravatar hash
         fcode: fcode,               // Nintendo switch friend code
-        failAttempts: 0,            // Number of failed login attempts
         reportedDisconnects: 0,     // Number of opponent disconnects reported
         rank: 0,                    // Player rank 0 to 5
         matches : {
@@ -136,7 +137,8 @@ function create(user, pass, mail, fcode) {
             loose: 0,               // Number of matches lost
             hang: 0,                // Number of matches not reported
             bad: 0,                 // Number of matches winner does not match
-            disconnects: 0,         // Number of matches disconnected
+            disconnect: 0,         // Number of matches disconnected
+            ranked: 0,              // Number of ranked matches
             casual: 0,              // Number of casual matches
         }
     };
@@ -216,6 +218,7 @@ function wsGet(user) {
 // export all functions
 module.exports = {  create, userAuth, get, remove, update,
     registerUser, confirmUser, wsAdd, wsRemove, wsGet, udb,
-    countUsers, getPublicInfo, resetRequest, resetPassword
+    countUsers, getPublicInfo, resetRequest, resetPassword,
+    countRegistered
 };
 

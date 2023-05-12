@@ -76,9 +76,8 @@ function matchJoinTimeout(matchid) {
 
     console.log('Checking timeout for match: ' + matchid);
 
-    if (match.playing === true) {
+    if (match.playing)
         return;
-    }
 
 
     // Send a message to the users that the match has been cancelled
@@ -183,9 +182,11 @@ function findCasualGame(uname) {
     let matchid = uuidv4();
     let data = {
         matchid: matchid,
+        type: 'casual',
         users: [uname, opponent[0]],
         udata: new Map(),
         time: Date.now(),
+        report: new Map(),
         playing: false
     }
 
@@ -207,6 +208,87 @@ function findCasualGame(uname) {
     return { code: 0, message: 'matched', matchid: matchid };
 }
 
+/*
+ * Valid results are:
+    close: the user closed the websocket without reporting
+    disconnect: the user reported opponent disconnecting
+    win: the user reported winning
+    loose: the user reported loosing
+ */
+function reportMatchResult(mdata, result) {
+    const matchid = mdata.matchid;
+    const match = matches.get(matchid);
+    const uname = mdata.uname;
+    const oname = mdata.odata.username;
+    let countMatch = false;
+
+
+    if (!match || !match.playing)
+        return false;
+
+    // Already reported
+    if (match.report.has(mdata.uname))
+        return false;
+
+    // If first report is a close, then notify opponent
+    const ws = user.wsGet(oname);
+    if (result === 'close' && ws) 
+        ws.send(JSON.stringify({push: 'disconnect'}));
+    else if (ws)
+        ws.send(JSON.stringify({push: 'end'}));
+
+    // Add report
+    match.report.set(mdata.uname, result);
+
+    // Check if both players have reported
+    if (match.report.size !== 2)
+        return false;
+    
+    // Check if both players have reported the same result
+    const ureport = match.report.get(uname);
+    const oreport = match.report.get(oname);
+    const udata = user.get(uname);
+    const odata = user.get(oname);
+    
+    if (ureport === 'win' && oreport === 'loose') {
+        udata.matches.win++;
+        odata.matches.loose++;
+        countMatch = true;
+    } else if (ureport === 'loose' && oreport === 'win') {
+        udata.matches.loose++;
+        odata.matches.win++;
+        countMatch = true;
+    } else if (ureport === 'close' && oreport === 'close') {
+        udata.matches.hang++;
+        odata.matches.hang++;
+    } else if (ureport === 'close' && oreport === 'disconnect') {
+        udata.matches.disconnect++;
+        odata.reportedDisconnects++;
+    } else if (ureport === 'disconnect' && oreport === 'close') {
+        udata.reportedDisconnects++;
+        odata.matches.disconnect++;
+    } else if (ureport === 'close') {
+        udata.matches.disconnect++;
+    } else if (oreport === 'close') {
+        odata.matches.disconnect++;
+    } else {
+        udata.matches.bad++;
+        odata.matches.bad++;
+    }
+
+    const type = match.type;
+    if (type === 'casual' && countMatch) {
+        udata.matches.casual++;
+        odata.matches.casual++; 
+    }
+
+    user.update(uname, udata);
+    user.update(oname, odata);
+
+    matches.delete(matchid);
+    return true;
+}
+
 
 function getMatchID(matchid) {
     return matches.get(matchid);
@@ -215,5 +297,5 @@ function getMatchID(matchid) {
 
 module.exports = { 
     findCasualGame, matchGetMyUserData, matchGetOpponentData,  getMatchID,
-    countMatches, countQueue
+    countMatches, countQueue, removeFromQueue, reportMatchResult
 };
