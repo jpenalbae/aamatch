@@ -11,6 +11,14 @@ const authRouter = require('./routes/api_authenticated');
 const pagesRouter = require('./routes/pages');
 const options = require('./config');
 
+
+
+function dropPrivs() {
+    if (options.dropPrivs)
+        process.setuid(options.dropUser);
+}
+
+
 const port = options.listenPort;
 
 const sessionOpts = {
@@ -76,10 +84,12 @@ authRouter.ws('/match/:matchid', wsMatchHandler);
 
 if (options.secure) {
     server.listen(port, () => {
+        dropPrivs();
         console.log(`listening on: ${options.url}`);
     });
 } else {
     app.listen(port, () => {
+        dropPrivs();
         console.log(`listening on: ${options.url}`);
     });
 }

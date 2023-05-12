@@ -13,6 +13,8 @@ const options = {
     secureCert: path.join(__dirname, 'data/cert.pem'),
     secureKey: path.join(__dirname, 'data/key.pem'),
     banTime: 3600000, // One hour (in milliseconds) Time to ban after rate limit
+    dropPrivs: false,    // Drop privileges after binding to port
+    dropUser: 'nobody', // User to drop privileges to
 };
 
 module.exports = options;
